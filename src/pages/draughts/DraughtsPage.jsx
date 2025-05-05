@@ -4,7 +4,6 @@ import GameControls from './GameControls';
 import GameInfo from './GameInfo';
 import MinimaxStateTree from './MinimaxStateTree';
 import { minimax } from '../../algorithms/MiniMax/minimax';
-import { minimaxWithTracking } from '../../algorithms/MiniMax/minimaxTracker';
 
 // Constants for game pieces
 const EMPTY = 0;
