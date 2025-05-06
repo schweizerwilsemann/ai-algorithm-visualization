@@ -4,16 +4,61 @@ const HeuristicInput = ({ graph, onHeuristicChange, onCostFunctionChange }) => {
   const [heuristicText, setHeuristicText] = useState('');
   const [costFunctionText, setCostFunctionText] = useState('');
   const [error, setError] = useState('');
+  const [heuristicFormatError, setHeuristicFormatError] = useState('');
+  const [costFormatError, setCostFormatError] = useState('');
+
+  // Regular expressions for validating input formats
+  const heuristicLineRegex = /^[A-Za-z0-9]+:\s*-?\d+(\.\d+)?$/;
+  const costFunctionLineRegex = /^[A-Za-z0-9]+,\s*[A-Za-z0-9]+:\s*-?\d+(\.\d+)?$/;
+
+  const validateHeuristicFormat = (text) => {
+    if (!text.trim()) return true; // Empty input is valid during typing
+
+    const lines = text.trim().split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line && !heuristicLineRegex.test(line)) {
+        setHeuristicFormatError(`Line ${i + 1} does not match format "node: value"`);
+        return false;
+      }
+    }
+    setHeuristicFormatError('');
+    return true;
+  };
+
+  const validateCostFormat = (text) => {
+    if (!text.trim()) return true; // Empty input is valid during typing
+
+    const lines = text.trim().split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line && !costFunctionLineRegex.test(line)) {
+        setCostFormatError(`Line ${i + 1} does not match format "node1,node2: value"`);
+        return false;
+      }
+    }
+    setCostFormatError('');
+    return true;
+  };
 
   const handleHeuristicTextChange = (e) => {
-    setHeuristicText(e.target.value);
+    const newText = e.target.value;
+    setHeuristicText(newText);
+    validateHeuristicFormat(newText);
   };
 
   const handleCostFunctionTextChange = (e) => {
-    setCostFunctionText(e.target.value);
+    const newText = e.target.value;
+    setCostFunctionText(newText);
+    validateCostFormat(newText);
   };
 
   const parseHeuristic = () => {
+    // First validate the format
+    if (!validateHeuristicFormat(heuristicText)) {
+      return null;
+    }
+
     try {
       // Parse the heuristic text into values
       const lines = heuristicText.trim().split('\n');
@@ -36,8 +81,8 @@ const HeuristicInput = ({ graph, onHeuristicChange, onCostFunctionChange }) => {
       }
 
       // Store the heuristic values
-
       setError('');
+      setHeuristicFormatError('');
       onHeuristicChange(heuristicValues);
 
       // Check if all nodes in the graph have a heuristic value
@@ -56,6 +101,11 @@ const HeuristicInput = ({ graph, onHeuristicChange, onCostFunctionChange }) => {
   };
 
   const parseCostFunction = () => {
+    // First validate the format
+    if (!validateCostFormat(costFunctionText)) {
+      return null;
+    }
+
     try {
       // Parse the cost function text into values
       const lines = costFunctionText.trim().split('\n');
@@ -82,8 +132,8 @@ const HeuristicInput = ({ graph, onHeuristicChange, onCostFunctionChange }) => {
       }
 
       // Store the cost values
-
       setError('');
+      setCostFormatError('');
       onCostFunctionChange(costValues);
 
       return costValues;
@@ -135,9 +185,21 @@ const HeuristicInput = ({ graph, onHeuristicChange, onCostFunctionChange }) => {
         </div>
       </div>
 
-      {error && (
+      {heuristicFormatError && (
         <div style={{ color: 'red', marginTop: '0.5rem' }}>
-          {error}
+          <strong>Heuristic Format Error:</strong> {heuristicFormatError}
+        </div>
+      )}
+
+      {costFormatError && (
+        <div style={{ color: 'red', marginTop: '0.5rem' }}>
+          <strong>Cost Function Format Error:</strong> {costFormatError}
+        </div>
+      )}
+
+      {error && !heuristicFormatError && !costFormatError && (
+        <div style={{ color: 'orange', marginTop: '0.5rem' }}>
+          <strong>Warning:</strong> {error}
         </div>
       )}
     </div>

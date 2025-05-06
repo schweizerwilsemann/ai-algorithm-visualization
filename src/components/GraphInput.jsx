@@ -5,22 +5,56 @@ const GraphInput = ({ onGraphChange, onStartStateChange, onGoalStateChange }) =>
   const [startState, setStartState] = useState('');
   const [goalState, setGoalState] = useState('');
   const [error, setError] = useState('');
+  const [formatError, setFormatError] = useState('');
+
+  // Regular expression for validating graph input format
+  const graphLineRegex = /^[A-Za-z0-9]+:\s*([A-Za-z0-9]+(,\s*[A-Za-z0-9]+)*)?$/;
+
+  const validateGraphFormat = (text) => {
+    if (!text.trim()) return true; // Empty input is valid during typing
+
+    const lines = text.trim().split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line && !graphLineRegex.test(line)) {
+        setFormatError(`Line ${i + 1} does not match format "node: neighbor1,neighbor2,..."`);
+        return false;
+      }
+    }
+    setFormatError('');
+    return true;
+  };
 
   const handleGraphTextChange = (e) => {
-    setGraphText(e.target.value);
+    const newText = e.target.value;
+    setGraphText(newText);
+    validateGraphFormat(newText);
   };
 
   const handleStartStateChange = (e) => {
-    setStartState(e.target.value);
-    onStartStateChange(e.target.value);
+    const value = e.target.value.trim();
+    // Only allow single alphanumeric node names
+    if (/^[A-Za-z0-9]*$/.test(value)) {
+      setStartState(value);
+      onStartStateChange(value);
+    }
   };
 
   const handleGoalStateChange = (e) => {
-    setGoalState(e.target.value);
-    onGoalStateChange(e.target.value);
+    const value = e.target.value.trim();
+    // Only allow single alphanumeric node names
+    if (/^[A-Za-z0-9]*$/.test(value)) {
+      setGoalState(value);
+      onGoalStateChange(value);
+    }
   };
 
   const parseGraph = () => {
+    // First validate the format
+    if (!validateGraphFormat(graphText)) {
+      return null;
+    }
+
     try {
       // Parse the graph text into an adjacency list
       const lines = graphText.trim().split('\n');
@@ -39,6 +73,7 @@ const GraphInput = ({ onGraphChange, onStartStateChange, onGoalStateChange }) =>
       }
 
       setError('');
+      setFormatError('');
       onGraphChange(graph);
 
       // If start or goal state is not in the graph, show a warning
@@ -105,9 +140,15 @@ const GraphInput = ({ onGraphChange, onStartStateChange, onGoalStateChange }) =>
         Parse Graph
       </button>
 
-      {error && (
+      {formatError && (
         <div style={{ color: 'red', marginTop: '0.5rem' }}>
-          {error}
+          <strong>Format Error:</strong> {formatError}
+        </div>
+      )}
+
+      {error && !formatError && (
+        <div style={{ color: 'orange', marginTop: '0.5rem' }}>
+          <strong>Warning:</strong> {error}
         </div>
       )}
     </div>
